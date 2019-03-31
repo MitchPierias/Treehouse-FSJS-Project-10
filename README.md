@@ -1,12 +1,26 @@
-# ![Treehouse](https://www.google.com/url?sa=i&rct=j&q=&esrc=s&source=imgres&cd=&ved=2ahUKEwiUk9aLhOPgAhWzgUsFHYUZA_QQjRx6BAgBEAU&url=https%3A%2F%2Fwww.pinterest.com%2Fpin%2F481322278907494613%2F&psig=AOvVaw1RBcGB40bs9YNxuCIZqRDO&ust=1551601482702191) Fullstack Javascript Tech Degree
+# ![Treehouse](https://2013.raleigh.wordcamp.org/files/2013/11/Treehouse-Logo.png) Fullstack Javascript Tech Degree
 ## Project 10 - Full Stack App with React and a REST API
 
 ### Usage
-Install all required dependencies
+Install all required `api` server dependencies
 ```
+cd ./api
 npm install
 ```
-Start the React server with
+Start a `mongodb` instance and seed the database
+```
+npm run seed
+```
+Then start the express server
+```
+npm start
+```
+Now open another terminal window, navigate back to the react `client` and install dependencies
+```
+cd ../client
+npm install
+```
+And finally start the React development client
 ```
 npm start
 ```
