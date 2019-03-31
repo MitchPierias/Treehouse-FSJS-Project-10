@@ -1,4 +1,4 @@
-# ![Treehouse](https://2013.raleigh.wordcamp.org/files/2013/11/Treehouse-Logo.png) Fullstack Javascript Tech Degree
+# <img src="https://2013.raleigh.wordcamp.org/files/2013/11/Treehouse-Logo.png" height="24" alt="Treehouse Logo"> Fullstack Javascript Tech Degree
 ## Project 10 - Full Stack App with React and a REST API
 
 ### Usage
