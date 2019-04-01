@@ -9,7 +9,7 @@ const cors = require('cors');
 // variable to enable global error logging
 const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'true';
 
-const hostName = 'mongodb+srv://admin:admin@fsjs-qr097.mongodb.net/fsjstd-restapi?retryWrites=true'; // 'mongodb://localhost:27017'
+const hostName = 'mongodb://localhost:27017';
 const databaseName = 'fsjstd-restapi';
 
 const joinUrl = (...args) => args.map(arg => arg.replace(/\/+$/gi,'')).join('/');
