@@ -92,6 +92,7 @@ class PrivateRoute extends React.Component {
         // Invalidate all stoarge
         localStorage.removeItem(KEY_LOCAL_CREDENTIALS);
         this.setState(initialState);
+        this.props.history.push('/');
     }
 
     /**
