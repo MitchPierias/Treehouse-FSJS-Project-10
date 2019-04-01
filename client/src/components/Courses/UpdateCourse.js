@@ -1,8 +1,8 @@
 // Modules
 import React from 'react';
 import { Redirect } from 'react-router-dom';
-import { requireAuthentication } from './../Authentication';
-import base64 from 'base-64';
+import { requireAuthentication } from './../../context/AuthService';
+import { connectAPI } from './../../context/APIService';
 
 class UpdateCourse extends React.Component {
 
@@ -10,9 +10,10 @@ class UpdateCourse extends React.Component {
         id:'',
         title:'',
         description:'',
-        estimatedTime:0,
+        estimatedTime:'',
         materialsNeeded:'',
-        user:{}
+        user:{},
+        redirect:false
     }
 
     constructor() {
@@ -24,16 +25,11 @@ class UpdateCourse extends React.Component {
     }
 
     componentDidMount() {
-        const id = this.props.match.params.id || null;
-        fetch(`http://localhost:5000/api/courses/${id}`, {
-            method:'GET',
-            headers: new Headers({'content-type':'application/json'}),
-            mode:'cors'
-        }).then(response => response.json()).then(({ courses }) => {
-            this.setState({ ...courses, isLoading:false, id });
-        }).catch(error => {
-            this.setState({ isLoading:false, id });
-        });
+        const { id } = this.props.match.params;
+        this.props.api.request(`courses/${id}`).then(({ courses }) => {
+            const redirect = (!this.props.user.matches(courses.user));
+            this.setState({ ...courses, id, redirect });
+        })
     }
 
     didSelectCancel(event) {
@@ -44,7 +40,8 @@ class UpdateCourse extends React.Component {
     didSubmitForm(event) {
         event.preventDefault();
         let { errors } = this.state;
-        const { id, title, description, estimatedTime, materialsNeeded } = this.state;
+        const { id } = this.props.match.params;
+        const { title, description, estimatedTime, materialsNeeded } = this.state;
         const { username, password } = this.props.user;
 
         errors = {};
@@ -55,38 +52,29 @@ class UpdateCourse extends React.Component {
         this.setState({ errors });
         if (Object.keys(errors).length > 0) return;
 
-        fetch(`http://localhost:5000/api/courses/${id}`, {
-            method:'PUT',
-            headers: new Headers({
-                'Content-Type':'application/json',
-                'Accept':'application/json',
-                'Authorization': 'Basic '+base64.encode(username + ":" + password)
-            }),
-            body: JSON.stringify({ id, title, description, estimatedTime, materialsNeeded }),
-            mode:'cors'
-        }).then(() => {
+        this.props.api.update(`courses/${id}`, {
+            title,
+            description,
+            estimatedTime,
+            materialsNeeded
+        }, { username, password }).then(() => {
             this.setState({ isLoading:false });
-        }).catch(error => {
-            console.log(error);
+            this.props.history.push(`/courses/${id}`);
         });
     }
 
     handlePropertyChange({ target }) {
-        const propName = target.name;
-        if (Object.keys(this.state).includes(propName))
-            this.setState({ [propName]:target.value });
-        else
-            console.log(`Input name '${propName}' is not a valid property name for target;`, target);
+        if (Object.keys(this.state).includes(target.name))
+            this.setState({ [target.name]:target.value });
     }
 
     render() {
 
-        const { title, description, estimatedTime, materialsNeeded } = this.state;
-        const { user } = this.props;
+        const { title, description, estimatedTime, materialsNeeded, user } = this.state;
 
-        if (!this.props.user.matches(user))
+        if (this.state.redirect)
             return <Redirect to="/forbidden"/>
-
+        
         return (
             <div className="bounds course--detail">
                 <h1>Update Course</h1>
@@ -98,7 +86,7 @@ class UpdateCourse extends React.Component {
                                 <div>
                                     <input id="title" name="title" type="text" className="input-title course--title--input" placeholder="Course title..." defaultValue={title}  onChange={this.handlePropertyChange}/>
                                 </div>
-                                <p>By {user.fullName()}</p>
+                                <p>By {user.firstName} {user.lastName}</p>
                             </div>
                             <div className="course--description">
                                 <div>
@@ -112,7 +100,7 @@ class UpdateCourse extends React.Component {
                                     <li className="course--stats--list--item">
                                         <h4>Estimated Time</h4>
                                         <div>
-                                            <input id="estimatedTime" name="estimatedTime" type="number" step={1} min={0} className="course--time--input" placeholder="Hours" defaultValue={parseInt(estimatedTime)} onChange={this.handlePropertyChange}/>
+                                            <input id="estimatedTime" name="estimatedTime" type="number" step={1} min={0} className="course--time--input" placeholder="Hours" value={Number(estimatedTime.replace(/\D?/gi,''))} onChange={this.handlePropertyChange}/>
                                         </div>
                                     </li>
                                     <li className="course--stats--list--item">
@@ -135,4 +123,4 @@ class UpdateCourse extends React.Component {
     }
 }
 
-export default requireAuthentication(UpdateCourse);
+export default connectAPI(requireAuthentication(UpdateCourse));

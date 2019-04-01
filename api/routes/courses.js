@@ -134,7 +134,7 @@ CourseRoute.delete('/:id', isAuthenticated, (req, res, next) => {
         // Deletes the users course
         CourseModel.deleteOne({ _id }, err => {
             if (err) return next(err);
-            res.send();
+            res.location('/').send();
         });
     }).catch(message => next({ status:400, message }));
 });

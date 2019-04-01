@@ -2,7 +2,7 @@ import React from 'react';
 import { Switch, Route } from 'react-router-dom';
 // Components
 import { Courses, CourseDetail, UpdateCourse , CreateCourse } from './components/Courses';
-import { UserSignIn, UserSignUp } from './components/Authentication';
+import { UserSignIn, UserSignUp } from './components/Users';
 import { Errors, Forbidden, NotFound } from './components/Errors';
 
 /**

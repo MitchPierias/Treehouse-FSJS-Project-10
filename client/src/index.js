@@ -5,7 +5,8 @@ import * as serviceWorker from './serviceWorker';
 // Components
 import Views from './App';
 import Header from './components/Header';
-import Authentication from './components/Authentication';
+import AuthProvider from './context/AuthService';
+import { APIService } from './context/APIService';
 // Styles
 import './index.css';
 
@@ -16,13 +17,15 @@ import './index.css';
  */
 const App = (
     <BrowserRouter>
-        <Authentication>
-            <div>
-                <Header/>
-                <hr/>
-                <Views/>
-            </div>
-        </Authentication>
+        <APIService url={'http://localhost:5000/api'}>
+            <AuthProvider>
+                <div>
+                    <Header/>
+                    <hr/>
+                    <Views/>
+                </div>
+            </AuthProvider>
+        </APIService>
     </BrowserRouter>
 )
 

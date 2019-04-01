@@ -1,8 +1,9 @@
 // Modules
 import React from 'react';
-import base64 from 'base-64';
+import Markdown from 'markdown-to-jsx';
 import { NavLink } from 'react-router-dom';
-import { connectAuthentication } from './../Authentication';
+import { connectAuthentication } from './../../context/AuthService';
+import { connectAPI } from './../../context/APIService';
 
 class CourseDetail extends React.Component {
 
@@ -23,31 +24,17 @@ class CourseDetail extends React.Component {
 
     componentDidMount() {
         const { id } = this.props.match.params;
-        fetch(`http://localhost:5000/api/courses/${id}`, {
-            method:'GET',
-            headers: new Headers({ 'Content-Type':'application/json' }),
-            mode:'cors'
-        }).then(response => response.json()).then(({ courses }) => {
+        this.props.api.fetch(`courses/${id}`).then(({ courses }) => {
             this.setState({ ...courses, isLoading:false });
-        }).catch(error => {
-            console.log(error);
         });
     }
 
-    didSelectDelete() {
+    didSelectDelete(event) {
+        event.preventDefault();
         const { id } = this.props.match.params;
         const { username, password } = this.props.user;
-        fetch(`http://localhost:5000/api/courses/${id}`, {
-            method:'DELETE',
-            headers: new Headers({
-                'Content-Type':'application/json',
-                'Authorization': 'Basic '+base64.encode(username + ":" + password)
-            }),
-            mode:'cors'
-        }).then(response => {
+        this.props.api.delete(`courses/${id}`, { username, password }).then(response => {
             this.props.history.push('/');
-        }).catch(error => {
-            console.log(error);
         });
     }
 
@@ -77,7 +64,9 @@ class CourseDetail extends React.Component {
                                 <h3 className="course--title">{this.state.title}</h3>
                                 <p>By {this.state.user.firstName} {this.state.user.lastName}</p>
                             </div>
-                            <div className="course--description">{this.state.description}</div>
+                            <div className="course--description">
+                                <Markdown>{this.state.description}</Markdown>
+                            </div>
                         </div>
                         <div className="grid-25 grid-right">
                             <div className="course--stats">
@@ -88,11 +77,7 @@ class CourseDetail extends React.Component {
                                     </li>
                                     <li className="course--stats--list--item">
                                         <h4>Materials Needed</h4>
-                                        <ul>
-                                            {this.state.materialsNeeded.split(/[\\*\\,]+\s/gi).map((material, idx) => {
-                                                return (material.length > 0) ? <li key={idx}>{material}</li> : null;
-                                            })}
-                                        </ul>
+                                        <Markdown>{this.state.materialsNeeded}</Markdown>
                                     </li>
                                 </ul>
                             </div>
@@ -103,4 +88,4 @@ class CourseDetail extends React.Component {
     }
 }
 
-export default connectAuthentication(CourseDetail);
+export default connectAuthentication(connectAPI(CourseDetail));

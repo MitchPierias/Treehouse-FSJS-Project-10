@@ -2,7 +2,7 @@
 import React from 'react';
 import { Redirect } from 'react-router-dom';
 import { withRouter } from "react-router";
-import base64 from 'base-64';
+import { connectAPI } from './APIService';
 // Defaults
 const initialState = { username:null, password:null, firstName:null, lastName:null }
 const KEY_LOCAL_CREDENTIALS = 'credentials';
@@ -49,7 +49,7 @@ export const requireAuthentication = ComposedComponent => connectAuthentication(
  * @desc Configures the authentication provider with managed state
  * @note Router is injected prior to exporting
  */
-class Authenticate extends React.Component {
+class PrivateRoute extends React.Component {
 
     state = initialState;
 
@@ -62,7 +62,7 @@ class Authenticate extends React.Component {
         this.isLogged = this.isLogged.bind(this);
         this.fullName = this.fullName.bind(this);
         this.matches = this.matches.bind(this);
-        this.handleAPIResponse = this.handleAPIResponse.bind(this);
+        this.pushError = this.pushError.bind(this);
     }
 
     /**
@@ -76,6 +76,15 @@ class Authenticate extends React.Component {
     }
 
     /**
+     * Push Error
+     * @desc Passthrough method to the APIService pushError function
+     * @param {string} message Error message
+     */
+    pushError(message) {
+        this.props.api.pushError(message);
+    }
+
+    /**
      * Sign Out
      * @desc Resets the state and clears the persitant session
      */
@@ -86,54 +95,35 @@ class Authenticate extends React.Component {
     }
 
     /**
-     * Handle API Response
-     * @desc Handles headers and response metadata
-     * @param {object} response Fetch response HTTP object
+     * Sign Up
+     * @desc Signs up a new user when email is unique
+     * @param {string} emailAddress User's preferred email address
+     * @param {string} password User's password
+     * @param {string} firstName User's given name
+     * @param {string} lastName User's surname
      */
-    handleAPIResponse(response) {
-        if (response.status >= 400)
-            throw Error('Invalid credentials');
-        if (response.headers.get('Location') && response.headers.get('Location') !== this.props.location.pathname)
-            this.props.history.push(response.headers.get('Location'));
-        else
-            return response.json();
-        return response;
-    }
-
     signUp(emailAddress, password, firstName, lastName) {
-        fetch(`http://localhost:5000/api/users`, {
-            method:'POST',
-            headers: new Headers({
-                'Content-Type':'application/json',
-                'Accept':'application/json',
-                'Access-Control-Expose-Headers': 'Location'
-            }),
-            body: JSON.stringify({ emailAddress, password, firstName, lastName }),
-            mode:'cors'
-        }).then(this.handleAPIResponse).then(response => {
+        return this.props.api.send('users', { emailAddress, password, firstName, lastName }).then(response => {
+            if (response) return;
             this.setState({ username:emailAddress, password, firstName, lastName });
             localStorage.setItem(KEY_LOCAL_CREDENTIALS, JSON.stringify({ username:emailAddress, password, firstName, lastName }));
-            this.props.history.push('/');
-        }).catch(error => {
-            console.log(error);
-        })
+        });
     }
 
+    /**
+     * Sign In
+     * @desc Signs in the user when credentials match a database record
+     * @param {string} username User's username
+     * @param {string} password User's password
+     */
     signIn(username, password) {
-        fetch(`http://localhost:5000/api/users`, {
-            method:'GET',
-            headers: new Headers({
-                'Content-Type':'application/json',
-                'Accept':'application/json',
-                'Access-Control-Expose-Headers': 'Location',
-                'Authorization': 'Basic '+base64.encode(username+":"+password)
-            }),
-            mode:'cors'
-        }).then(this.handleAPIResponse).then(({ firstName, lastName }) => {
-            this.setState({ username, password, firstName, lastName });
-            localStorage.setItem(KEY_LOCAL_CREDENTIALS, JSON.stringify({ username, password, firstName, lastName }));
-            this.props.history.push('/');
-        })
+        return this.props.api.fetch('users', { username, password }).then(({ firstName, lastName }) => {
+            if (firstName && lastName) {
+                this.setState({ username, password, firstName, lastName });
+                localStorage.setItem(KEY_LOCAL_CREDENTIALS, JSON.stringify({ username, password, firstName, lastName }));
+                this.props.history.goBack();
+            }
+        });
     }
 
     /**
@@ -167,6 +157,10 @@ class Authenticate extends React.Component {
         return this.state.firstName + ' ' + this.state.lastName;
     }
 
+    /**
+     * Render
+     * @desc Configures and wraps an Authentication provider around child components
+     */
     render() {
         return (
             <AuthContext.Provider value={{
@@ -176,7 +170,8 @@ class Authenticate extends React.Component {
                 fullName:this.fullName,
                 signIn:this.signIn,
                 signUp:this.signUp,
-                matches:this.matches
+                matches:this.matches,
+                pushError:this.pushError
             }}>
                 {this.props.children}
             </AuthContext.Provider>
@@ -187,4 +182,5 @@ class Authenticate extends React.Component {
 /**
  * Inject router into Authentication component
  */
-export const AuthProvider = withRouter(Authenticate);
+const AuthProvider = connectAPI(withRouter(PrivateRoute));
+export default AuthProvider;

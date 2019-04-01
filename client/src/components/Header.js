@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 // Context
-import { connectAuthentication } from './Authentication';
+import { connectAuthentication } from './../context/AuthService';
 
 const Header = ({ user }) => {
     return (

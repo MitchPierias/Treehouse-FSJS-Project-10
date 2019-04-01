@@ -3,6 +3,7 @@
 // "Course Detail" screen, and renders a link to the "Create Course" screen.
 import React, { Fragment } from 'react';
 import { NavLink } from 'react-router-dom';
+import { connectAPI } from './../../context/APIService';
 
 class Courses extends React.Component {
 
@@ -13,11 +14,7 @@ class Courses extends React.Component {
     }
 
     componentDidMount() {
-        fetch('http://localhost:5000/api/courses', {
-            method:'GET',
-            headers: new Headers({'content-type':'application/json'}),
-            mode:'cors'
-        }).then(response => response.json()).then(data => {
+        this.props.api.request('courses').then(data => {
             this.setState({ data, isLoading:false });
         }).catch(error => {
             this.setState({ error, isLoading:false });
@@ -27,24 +24,23 @@ class Courses extends React.Component {
     render() {
         return (
             <div className="bounds">
-                {(this.state.error) ? <div>{this.state.error.message}</div> : null}
-                {(this.state.isLoading)
-                    ? <p>Loading...</p>
-                    : <CourseList courses={this.state.data}/>
-                }
+                {(this.state.error)
+                    ? <div>{this.state.error.message}</div>
+                    : ((this.state.isLoading)
+                        ? <p>Loading...</p>
+                        : <CourseList courses={this.state.data}/>
+                )}
             </div>
         )
     }
 }
 
-const CourseList = ({ courses }) => {
-    return (
-        <>
-            {courses.map(course => <CourseListItem key={course._id} course={course}/>)}
-            <CourseListCreateItem/>
-        </>
-    )
-}
+const CourseList = ({ courses=[] }) => (
+    <Fragment>
+        {courses.map(course => <CourseListItem key={course._id} course={course}/>)}
+        <CourseListCreateItem/>
+    </Fragment>
+)
 
 /**
  * List Item
@@ -83,4 +79,4 @@ const CourseListCreateItem = () => (
     </div>
 )
 
-export default Courses;
+export default connectAPI(Courses);
